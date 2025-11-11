@@ -13,4 +13,8 @@ describe('Hello World endpoint', () => {
     expect(responseJson.status).toEqual('success');
     expect(responseJson.message).toEqual('Hello World!');
   });
+
+  it('should fail intentionally to trigger CI failure', async () => {
+    expect(1 + 1).toEqual(3);
+  });
 });
