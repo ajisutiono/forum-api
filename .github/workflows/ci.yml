@@ -1,4 +1,4 @@
-name: Continuous Integration Forum API
+name: Continuous Integration
 
 on:
   pull_request:
