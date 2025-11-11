@@ -1,0 +1,60 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: dicodingacademy
+          POSTGRES_PASSWORD: supersecret
+          POSTGRES_DB: forumapi_test
+        options: >-
+          --health-cmd="pg_isready -U dicodingacademy"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run migration
+        run: npm run migrate up
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: dicodingacademy
+          PGPASSWORD: supersecret
+          PGDATABASE: forumapi_test
+
+      - name: Run tests
+        run: npm test -- --runInBand
+        env:
+          CI: true
+          HOST: localhost
+          PORT: 5000
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: dicodingacademy
+          PGPASSWORD: supersecret
+          PGDATABASE: forumapi_test
+          ACCESS_TOKEN_KEY: secret
+          REFRESH_TOKEN_KEY: terces
+          ACCESS_TOKEN_AGE: 3600
