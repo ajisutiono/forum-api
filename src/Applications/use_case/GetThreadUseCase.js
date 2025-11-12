@@ -3,10 +3,16 @@ const DetailedComment = require('../../Domains/comments/entities/DetailedComment
 const DetailedReply = require('../../Domains/replies/entities/DetailedReply');
 
 class GetThreadUseCase {
-  constructor({ threadRepository, commentRepository, replyRepository }) {
+  constructor({
+    threadRepository,
+    commentRepository,
+    replyRepository,
+    likeRepository,
+  }) {
     this._threadRepository = threadRepository;
     this._commentRepository = commentRepository;
     this._replyRepository = replyRepository;
+    this._likeRepository = likeRepository;
   }
 
   async execute(useCasePayload) {
@@ -26,10 +32,12 @@ class GetThreadUseCase {
       username: reply.username,
     }));
 
-    const commentsWithReplies = comments.map((comment) => {
+    const commentsWithReplies = await Promise.all(comments.map(async (comment) => {
       const commentReplies = detailedReplies
         .filter((reply) => reply.commentId === comment.id)
         .map(({ commentId, ...reply }) => reply);
+
+      const likeCount = await this._likeRepository.getLikeCountByCommentId(comment.id);
 
       return new DetailedComment({
         id: comment.id,
@@ -37,8 +45,9 @@ class GetThreadUseCase {
         date: comment.date,
         content: comment.is_deleted ? '**komentar telah dihapus**' : comment.content,
         replies: commentReplies,
+        likeCount,
       });
-    });
+    }));
 
     return new DetailedThread({
       ...thread,
